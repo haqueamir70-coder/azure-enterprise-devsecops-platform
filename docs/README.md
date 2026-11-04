@@ -77,3 +77,7 @@ Add a remote backend, OIDC identity, environment approvals, plan review, policy 
 ### 10. Answer
 
 A landing zone also needs identity governance, management groups, policy assignments, connectivity, DNS, centralized logging, operational ownership and tested recovery. A network module alone is not a full landing zone.
+
+## Complete zero-to-hero guide
+
+See [ZERO-TO-HERO.md](./ZERO-TO-HERO.md) for the business scenario, architecture walkthrough, tool-by-tool explanations, implementation sequence, practical commands, troubleshooting playbook and additional scenario-based interview questions with answers.
