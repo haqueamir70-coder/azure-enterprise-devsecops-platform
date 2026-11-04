@@ -39,3 +39,13 @@ jobs:
 
       - name: Terraform validate
         run: terraform -chdir=infrastructure/environments/dev validate
+
+      - name: Run TFLint
+        run: tflint --recursive
+
+      - name: Scan Terraform modules with Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infrastructure
+          framework: terraform
+          soft_fail: true
