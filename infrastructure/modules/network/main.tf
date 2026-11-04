@@ -20,3 +20,43 @@ resource "azurerm_subnet" "management" {
   virtual_network_name = azurerm_virtual_network.this.name
   address_prefixes     = var.management_subnet_address_prefixes
 }
+
+resource "azurerm_network_security_group" "app" {
+  name                = "${var.vnet_name}-app-nsg"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "AllowHTTPSFromVNet"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "*"
+  }
+
+  tags = var.tags
+}
+
+resource "azurerm_network_security_group" "management" {
+  name                = "${var.vnet_name}-management-nsg"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  # No custom inbound allow rules. Add management access only after defining
+  # an approved VPN, Bastion or private jump-host path.
+  tags = var.tags
+}
+
+resource "azurerm_subnet_network_security_group_association" "app" {
+  subnet_id                 = azurerm_subnet.app.id
+  network_security_group_id = azurerm_network_security_group.app.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "management" {
+  subnet_id                 = azurerm_subnet.management.id
+  network_security_group_id = azurerm_network_security_group.management.id
+}
