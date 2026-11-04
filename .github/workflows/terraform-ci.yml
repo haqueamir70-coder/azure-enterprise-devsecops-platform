@@ -40,6 +40,12 @@ jobs:
       - name: Terraform validate
         run: terraform -chdir=infrastructure/environments/dev validate
 
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: Initialize TFLint
+        run: tflint --init
+
       - name: Run TFLint
         run: tflint --recursive
 
