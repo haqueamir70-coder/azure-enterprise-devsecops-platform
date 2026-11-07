@@ -1,3 +1,15 @@
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0B1F3A,50:2563EB,100:06B6D4&height=190&section=header&text=Azure+Enterprise+DevSecOps+Platform&fontSize=32&fontColor=ffffff&animation=fadeIn" alt="Azure Enterprise DevSecOps Platform project banner" width="100%" />
+
+<img src="https://readme-typing-svg.demolab.com/?font=Inter&weight=600&size=16&pause=1600&color=38BDF8&center=true&vCenter=true&width=900&height=36&lines=Azure+Enterprise+DevSecOps+Platform+%E2%80%A2+Architecture+%E2%80%A2+Automation+%E2%80%A2+Security" alt="Animated project focus line" />
+
+![Azure](https://img.shields.io/badge/Microsoft+Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white) ![Terraform](https://img.shields.io/badge/Infrastructure+as+Code-844FBA?style=for-the-badge&logo=terraform&logoColor=white) ![CI](https://img.shields.io/badge/GitHub+Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+
+</div>
+
+---
+
 # Azure Enterprise DevSecOps Platform
 
 > **Status:** Small Terraform foundation reference with resource-group and network modules, subnet-level NSG controls, and CI validation/lint/security scanning. No Azure deployment is claimed.
