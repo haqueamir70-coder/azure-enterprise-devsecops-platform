@@ -1,62 +1,70 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0B1F3A,50:2563EB,100:06B6D4&height=190&section=header&text=Azure+Enterprise+DevSecOps+Platform&fontSize=32&fontColor=ffffff&animation=fadeIn" alt="Azure Enterprise DevSecOps Platform project banner" width="100%" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:071A2F,45:1D4ED8,100:38BDF8&height=215&section=header&text=Azure%20Enterprise%20DevSecOps&fontSize=35&fontColor=ffffff&animation=fadeIn" width="100%" alt="Azure Enterprise DevSecOps Foundation"/>
 
-<img src="https://readme-typing-svg.demolab.com/?font=Inter&weight=600&size=16&pause=1600&color=38BDF8&center=true&vCenter=true&width=900&height=36&lines=Azure+Enterprise+DevSecOps+Platform+%E2%80%A2+Architecture+%E2%80%A2+Automation+%E2%80%A2+Security" alt="Animated project focus line" />
+### Reusable cloud foundations · Secure delivery gates · Network isolation
 
-![Azure](https://img.shields.io/badge/Microsoft+Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white) ![Terraform](https://img.shields.io/badge/Infrastructure+as+Code-844FBA?style=for-the-badge&logo=terraform&logoColor=white) ![CI](https://img.shields.io/badge/GitHub+Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+[![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/)
+[![Terraform](https://img.shields.io/badge/Terraform-844FBA?style=for-the-badge&logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform)
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://docs.github.com/actions)
+[![Security](https://img.shields.io/badge/DevSecOps-Shift_Left-0F766E?style=for-the-badge)](https://owasp.org/www-project-devsecops-guideline/)
+
+**A compact enterprise foundation showing how reusable Terraform modules, subnet-level controls and automated code checks fit into an Azure DevSecOps workflow.**
+
+[Architecture](#-architecture) · [Modules](#-module-catalogue) · [Validate](#-local-validation) · [Security checklist](#-security-review)
 
 </div>
 
----
+> [!NOTE]
+> This is a small Terraform foundation reference, not a deployed Azure environment. The diagram shows the intended resource composition; no Azure deployment is claimed.
 
-# Azure Enterprise DevSecOps Platform
+## Engineering objective
 
-> **Status:** Small Terraform foundation reference with resource-group and network modules, subnet-level NSG controls, and CI validation/lint/security scanning. No Azure deployment is claimed.
+Build a clean, reviewable starting point for Azure infrastructure: isolate application and management network segments, keep resource definitions reusable, and make code quality/security checks part of pull requests.
 
 ## Architecture
 
 ```mermaid
 flowchart TB
   PR[Pull request] --> CI[GitHub Actions]
-  CI --> FMT[Terraform format]
-  FMT --> VAL[Terraform init and validate]
-  VAL --> LINT[TFLint]
-  LINT --> SCAN[Checkov advisory scan]
-  SCAN --> REVIEW[Human review]
-  REVIEW --> PLAN[Separately authorized plan/apply]
-  subgraph Azure[Azure dev foundation]
-    RG[Resource group]
+  CI --> Fmt[Terraform fmt]
+  Fmt --> Init[Backend-free init]
+  Init --> Validate[Terraform validate]
+  Validate --> Lint[TFLint]
+  Lint --> Scan[Checkov advisory scan]
+  Scan --> Review[Engineer review]
+  Review --> Plan[Separately authorized plan]
+  subgraph Azure[Azure development foundation]
+    RG[Resource group module]
+    Net[Network module]
     VNet[VNet 10.10.0.0/16]
-    App[App subnet + NSG]
+    App[Application subnet + NSG]
     Mgmt[Management subnet + NSG]
-    RG --> VNet
+    RG --> Net --> VNet
     VNet --> App
     VNet --> Mgmt
   end
-  PLAN --> Azure
+  Plan -. approved operation .-> Azure
 ```
 
-## Implemented
+## Module catalogue
 
-- Reusable resource-group module with tags.
-- Reusable network module with a VNet, application subnet and management subnet.
-- Dedicated NSGs associated with both subnets.
-- Application NSG permits TCP/443 only from the VNet service tag; it does not create a public Internet ingress path.
-- Management subnet has no custom inbound allow rule. Add access only after designing an approved VPN, Bastion or private jump-host route.
-- Terraform environment root with explicit variables and outputs.
-- GitHub Actions formatting, backend-free initialization, validation, TFLint and advisory Checkov scanning.
+| Module / layer | Responsibility |
+|---|---|
+| `infrastructure/modules/resource-group` | Reusable resource-group creation and tags |
+| `infrastructure/modules/network` | VNet, application and management subnets |
+| Network security groups | Separate policy attachment for each subnet |
+| `infrastructure/environments/dev` | Development root module, inputs and outputs |
+| GitHub Actions | Format, init, validate, lint and advisory IaC scan |
 
-## Repository layout
+## Network security model
 
-- infrastructure/environments/dev — Terraform environment root
-- infrastructure/modules/resource-group — resource group module
-- infrastructure/modules/network — VNet, subnets, NSGs and associations
-- docs/security-review-checklist.md — review items for production hardening
+- **Application subnet:** sample inbound TCP/443 is scoped to the VNet service tag. This does not create public Internet ingress.
+- **Management subnet:** no custom inbound allow rule is defined; default inbound deny remains in effect.
+- **Administrative access:** add VPN, Azure Bastion or a private jump-host route only after defining the trust boundary and operator identity.
+- **Egress and routing:** NSGs are not a complete perimeter. Review outbound access, UDRs, DNS, private endpoints and diagnostics for the target workload.
 
-## Validate locally
-
-From the repository root:
+## Local validation
 
 ```bash
 terraform -chdir=infrastructure/environments/dev fmt -check -recursive
@@ -66,22 +74,40 @@ tflint --recursive
 checkov -d infrastructure --framework terraform
 ```
 
-Checkov is currently advisory in CI while the baseline is reviewed; findings must be triaged rather than ignored. A passing syntax/lint workflow does not establish Azure policy compliance or runtime security.
+Check the workflow for the exact tool versions and working directories. Checkov is advisory while the baseline is reviewed; findings must be triaged and tracked, not ignored. A green static-analysis run does not establish cloud runtime security.
 
-## Security and operations
+## Security review
 
-- Use short-lived Azure OIDC federation for CI identities.
-- Protect remote Terraform state and enable locking before team use.
-- Scope ingress to trusted network paths; do not equate an NSG rule with a complete perimeter.
-- Add route tables, private endpoints/DNS, diagnostics, policy assignments, workload identity and backup/recovery according to actual workload needs.
-- Review cost, region/SKU availability and subscription permissions before any deployment.
-- Never commit credentials, Terraform state, plan files or real variable files.
+- [ ] Configure remote state with encryption, locking and restricted access.
+- [ ] Use OIDC federation for CI identities rather than stored long-lived secrets.
+- [ ] Scope Azure roles to the required resources and operations.
+- [ ] Add private endpoints and private DNS only where the workload requires them.
+- [ ] Define ingress and egress paths explicitly.
+- [ ] Enable diagnostics and route logs to an owned monitoring destination.
+- [ ] Review region, SKU, quotas and cost before any apply.
+- [ ] Document rollback and teardown.
 
-## Author
+## Repository map
 
-MD Amirul Haque · [GitHub profile](https://github.com/haqueamir70-coder) · [LinkedIn](https://www.linkedin.com/in/md-amirul-haque/)
+```text
+infrastructure/
+  environments/dev/       # Terraform root module
+  modules/resource-group/ # Resource group module
+  modules/network/        # VNet, subnets and NSGs
+.github/workflows/        # CI checks
+docs/
+  security-review-checklist.md
+```
 
+## Project documentation
 
-## Architecture and interview preparation
+- [Architecture and interview guide](docs/README.md)
+- [Zero-to-hero implementation guide](docs/ZERO-TO-HERO.md)
+- [Advanced interview bank](docs/ADVANCED-INTERVIEW-BANK.md)
+- [Security review checklist](docs/security-review-checklist.md)
 
-See the [architecture diagram and interview questions](docs/README.md) for the repository-specific design walkthrough and technical interview guide.
+## Maintainer
+
+**MD Amirul Haque** · [GitHub](https://github.com/haqueamir70-coder) · [LinkedIn](https://www.linkedin.com/in/md-amirul-haque/)
+
+<sub>Make infrastructure reusable. Make security reviewable. Make change deliberate.</sub>
